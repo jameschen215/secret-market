@@ -10,26 +10,7 @@
 	let starting = $state(false);
 	let errorMsg = $state('');
 
-	const targets = [
-		{
-			id: 1,
-			name: 'finn',
-			displayName: 'Finn',
-			imagePath: '/images/characters/finn.png'
-		},
-		{
-			id: 2,
-			name: 'sage',
-			displayName: 'Sage',
-			imagePath: '/images/characters/sage.png'
-		},
-		{
-			id: 3,
-			name: 'ruby',
-			displayName: 'Ruby',
-			imagePath: '/images/characters/ruby.png'
-		}
-	];
+	let { data } = $props();
 
 	function onStart() {
 		starting = true;
@@ -88,7 +69,11 @@
 		<!-- Game Board -->
 
 		<div class="game-board">
-			<GameBoard {phase} />
+			<GameBoard
+				{phase}
+				imagePath={data.game.imagePath}
+				targets={data.targets}
+			/>
 
 			<!-- Overlay - mobile only, tappable to start -->
 			{#if phase === 'idle'}
@@ -118,7 +103,7 @@
 			<Timer />
 
 			<!-- Target cards -->
-			<TargetPanel {phase} {targets} />
+			<TargetPanel {phase} targets={data.targets} />
 
 			<!-- Control Area -->
 			<div class="control-wrap">

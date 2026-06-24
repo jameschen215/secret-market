@@ -2,43 +2,21 @@
 	import { MENU_HEIGHT, MENU_WIDTH, RING_OFFSET } from '$lib/utils/constants';
 	import { tick } from 'svelte';
 
-	// interface TargetInfo {
-	// 	id: number;
-	// 	name: string;
-	// 	displayName: string;
-	// 	imagePath: string;
-	// }
-
-	// interface ClickFeedback {
-	// 	x: number;
-	// 	y: number;
-	// 	type: 'hit' | 'miss';
-	// 	targetName?: string;
-	// }
-
-	const imagePath = '/images/game/main.png';
-	const targets = [
-		{
-			id: 1,
-			name: 'finn',
-			displayName: 'Finn',
-			imagePath: '/images/characters/finn.png'
-		},
-		{
-			id: 2,
-			name: 'sage',
-			displayName: 'Sage',
-			imagePath: '/images/characters/sage.png'
-		},
-		{
-			id: 3,
-			name: 'ruby',
-			displayName: 'Ruby',
-			imagePath: '/images/characters/ruby.png'
-		}
-	];
-
-	const { phase }: { phase: 'idle' | 'completed' | 'playing' } = $props();
+	type TargetInfo = {
+		id: number;
+		name: string;
+		displayName: string;
+		imagePath: string;
+	};
+	const {
+		phase,
+		imagePath,
+		targets
+	}: {
+		phase: 'idle' | 'completed' | 'playing';
+		imagePath: string;
+		targets: TargetInfo[];
+	} = $props();
 
 	// Selector popup state
 	let selectorOpen = $state(false);
