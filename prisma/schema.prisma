@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  FLAGGED
+}
+
+model Game {
+  id        Int    @id @default(autoincrement())
+  slug      String @unique
+  title     String
+  imagePath String @map("image_path")
+  minTimeMs Int    @default(2500) @map("min_time_ms")
+
+  targets  Target[]
+  sessions GameSession[]
+
+  @@map("games")
+}
+
+model GameSession {
+  id          String        @id @default(cuid())
+  gameId      Int           @map("game_id")
+  tokenHash   String        @map("token_hash")
+  status      SessionStatus @default(ACTIVE)
+  startedAt   DateTime      @default(now()) @map("started_at")
+  completedAt DateTime?     @default(now()) @map("completed_at")
+
+  game  Game   @relation(fields: [gameId], references: [id])
+  hits  Hit[]
+  score Score?
+
+  @@map("game_sessions")
+}
+
+model Target {
+  id          Int    @id @default(autoincrement())
+  gameId      Int    @map("game_id")
+  name        String
+  displayName String @map("display_name")
+  imagePath   String @map("image_path")
+
+  boundingBox   Json @map("bounding_box")
+  polygonPoints Json @map("polygon_points")
+
+  game Game @relation(fields: [gameId], references: [id])
+
+  // hits Hit[]
+  hits Hit[]
+
+  @@map("targets")
+}
+
+model Hit {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @map("session_id")
+  targetId  Int      @map("target_id")
+  clickX    Float    @map("click_x")
+  clickY    Float    @map("click_y")
+  verified  Boolean  @default(false)
+  foundAt   DateTime @default(now()) @map("found_at")
+
+  session GameSession @relation(fields: [sessionId], references: [id])
+  target  Target      @relation(fields: [targetId], references: [id])
+
+  @@unique([sessionId, targetId])
+  @@map("hits")
+}
+
+model Score {
+  id         Int      @id @default(autoincrement())
+  sessionId  String   @unique @map("session_id")
+  playerName String   @map("player_name")
+  timeMs     Int      @map("time_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  session GameSession @relation(fields: [sessionId], references: [id])
+
+  @@index([timeMs])
+  @@map("scores")
+}
