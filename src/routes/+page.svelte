@@ -7,11 +7,10 @@
 		resetGame,
 		startGame
 	} from '$lib/game-state.svelte.js';
+	import Timer from './_components/Timer.svelte';
 	import GameBoard from './_components/GameBoard.svelte';
 	import ScoreModal from './_components/ScoreModal.svelte';
 	import TargetPanel from './_components/TargetPanel.svelte';
-
-	import Timer from './_components/Timer.svelte';
 
 	let { data } = $props();
 	let starting = $state(false);

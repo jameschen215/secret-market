@@ -82,10 +82,10 @@ const sagePolygon: PolygonPoint[] = [
 
 const gameImageData = [
 	{
-		slug: 'village-square',
-		title: 'Village Square',
+		slug: 'secret-market',
+		title: 'Secret Market',
 		imagePath: '/images/game/main.png',
-		minTimeMs: 3000,
+		minTimeMs: 2500,
 		targets: {
 			create: [
 				{
