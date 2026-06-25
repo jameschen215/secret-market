@@ -30,7 +30,7 @@ model Game {
 model GameSession {
   id          String        @id @default(cuid())
   gameId      Int           @map("game_id")
-  tokenHash   String        @map("token_hash")
+  tokenHash   String        @unique @map("token_hash")
   status      SessionStatus @default(ACTIVE)
   startedAt   DateTime      @default(now()) @map("started_at")
   completedAt DateTime?     @default(now()) @map("completed_at")
