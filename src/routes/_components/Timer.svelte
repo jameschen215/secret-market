@@ -1,15 +1,12 @@
 <script lang="ts">
+	import { getElapsed, getPhase, isTimerRunning } from '$lib/game-state.svelte';
 	import { formatTime } from '$lib/utils/formatter';
-
-	const elapsed = 1350;
-	let phase = $state<'idle' | 'playing' | 'completed'>('idle');
-	let timerRunning = $state(false);
 </script>
 
 <div
 	class="timer"
-	class:running={timerRunning}
-	class:completed={phase === 'completed'}
+	class:running={isTimerRunning()}
+	class:completed={getPhase() === 'completed'}
 >
 	<svg
 		viewBox="0 0 24 24"
@@ -24,7 +21,7 @@
 		<path d="M12 2v2" />
 	</svg>
 
-	<span class="timer-value">{formatTime(elapsed)}</span>
+	<span class="timer-value">{formatTime(getElapsed())}</span>
 </div>
 
 <style>

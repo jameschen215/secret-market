@@ -1,28 +1,45 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import {
+		getPhase,
+		preloadSession,
+		resetGame,
+		startGame
+	} from '$lib/game-state.svelte.js';
 	import GameBoard from './_components/GameBoard.svelte';
 	import ScoreModal from './_components/ScoreModal.svelte';
 	import TargetPanel from './_components/TargetPanel.svelte';
+
 	import Timer from './_components/Timer.svelte';
 
-	let phase = $state<'idle' | 'playing' | 'completed'>('idle');
+	let { data } = $props();
 	let starting = $state(false);
 	let errorMsg = $state('');
 
-	let { data } = $props();
+	$effect(() => {
+		resetGame();
+	});
 
-	function onStart() {
+	$effect.root(() => {
+		preloadSession(data.game.id);
+	});
+
+	async function onStart() {
 		starting = true;
-		phase = 'playing';
+		errorMsg = '';
 
-		console.log('Game starting...');
+		try {
+			await startGame(data.game.id);
+		} catch (err) {
+			starting = false;
+			errorMsg = err instanceof Error ? err.message : 'Failed to start game';
+		}
 	}
-	function resetGame() {
-		starting = false;
-		phase = 'idle';
 
-		console.log('Resetting game...');
+	function onStop() {
+		starting = false;
+		resetGame();
 	}
 </script>
 
@@ -30,7 +47,7 @@
 	<!-- Header - title & leaderboard button (mobile only)-->
 	<header class="header">
 		<div class="header-left">
-			<h1 class="title">Secret Market</h1>
+			<h1 class="title">{data.game.title}</h1>
 			<p class="subtitle">Find all the hidden characters</p>
 		</div>
 
@@ -40,7 +57,7 @@
 				class="leaderboard-btn-mobile"
 				aria-label="Leaderboard"
 				title="Leaderboard"
-				disabled={phase === 'playing'}
+				disabled={getPhase() === 'playing'}
 				onclick={() => goto(resolve('/leaderboard'))}
 			>
 				<svg
@@ -69,14 +86,10 @@
 		<!-- Game Board -->
 
 		<div class="game-board">
-			<GameBoard
-				{phase}
-				imagePath={data.game.imagePath}
-				targets={data.targets}
-			/>
+			<GameBoard imagePath={data.game.imagePath} targets={data.targets} />
 
 			<!-- Overlay - mobile only, tappable to start -->
-			{#if phase === 'idle'}
+			{#if getPhase() === 'idle'}
 				<button
 					type="button"
 					class="board-overlay-mobile"
@@ -103,11 +116,11 @@
 			<Timer />
 
 			<!-- Target cards -->
-			<TargetPanel {phase} targets={data.targets} />
+			<TargetPanel targets={data.targets} />
 
 			<!-- Control Area -->
 			<div class="control-wrap">
-				{#if phase === 'idle'}
+				{#if getPhase() === 'idle'}
 					<button
 						type="button"
 						class="start-btn-desktop"
@@ -119,13 +132,13 @@
 					</button>
 				{/if}
 
-				{#if phase === 'playing'}
+				{#if getPhase() === 'playing'}
 					<button
 						type="button"
 						class="stop-btn"
 						aria-label="Stop Game"
 						disabled={!starting}
-						onclick={resetGame}
+						onclick={onStop}
 					>
 						Stop Game
 					</button>
@@ -140,7 +153,7 @@
 					type="button"
 					class="leaderboard-btn-desktop"
 					aria-label="Leaderboard"
-					disabled={phase === 'playing'}
+					disabled={getPhase() === 'playing'}
 					onclick={() => goto(resolve('/leaderboard'))}
 				>
 					Leaderboard
@@ -167,7 +180,7 @@
 
 	<!-- Score Modal -->
 
-	{#if phase === 'completed'}
+	{#if getPhase() === 'completed'}
 		<ScoreModal />
 	{/if}
 </div>

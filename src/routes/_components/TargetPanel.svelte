@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getPhase, isTargetFound } from '$lib/game-state.svelte';
+
 	type TargetInfo = {
 		id: number;
 		name: string;
@@ -6,11 +8,7 @@
 		imagePath: string;
 	};
 
-	let {
-		phase,
-		targets
-	}: { phase: 'idle' | 'playing' | 'completed'; targets: TargetInfo[] } =
-		$props();
+	let { targets }: { targets: TargetInfo[] } = $props();
 </script>
 
 <div class="target-panel">
@@ -18,7 +16,7 @@
 
 	<div class="targets">
 		{#each targets as target (target.id)}
-			{@const found = false}
+			{@const found = getPhase() !== 'idle' && isTargetFound(target.id)}
 
 			<div class="target-card" class:found data-accent={target.name}>
 				<div class="avatar-wrap">
@@ -42,7 +40,11 @@
 					<span class="target-name">{target.displayName}</span>
 
 					<span class="target-status">
-						{phase === 'idle' ? 'Hiding' : found ? 'Found!' : 'Searching...'}
+						{getPhase() === 'idle'
+							? 'Hiding'
+							: found
+								? 'Found!'
+								: 'Searching...'}
 					</span>
 				</div>
 			</div>

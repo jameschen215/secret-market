@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getFeedback, getPhase, handleClick } from '$lib/game-state.svelte';
 	import { MENU_HEIGHT, MENU_WIDTH, RING_OFFSET } from '$lib/utils/constants';
 	import { tick } from 'svelte';
 
@@ -8,15 +9,13 @@
 		displayName: string;
 		imagePath: string;
 	};
-	const {
-		phase,
-		imagePath,
-		targets
-	}: {
-		phase: 'idle' | 'completed' | 'playing';
+
+	interface Props {
 		imagePath: string;
 		targets: TargetInfo[];
-	} = $props();
+	}
+
+	const { imagePath, targets }: Props = $props();
 
 	// Selector popup state
 	let selectorOpen = $state(false);
@@ -35,7 +34,7 @@
 	async function onImageClick(e: MouseEvent) {
 		if (!boardEl) return;
 
-		if (phase !== 'playing') return;
+		if (getPhase() !== 'playing') return;
 
 		const imgEl = e.currentTarget as HTMLDivElement;
 		const rect = imgEl.getBoundingClientRect();
@@ -80,6 +79,7 @@
 		if (!boardEl) return;
 
 		const boardRect = boardEl.getBoundingClientRect();
+
 		handleClick(
 			clickPercentX,
 			clickPercentY,
@@ -91,21 +91,6 @@
 
 	function closeSelector() {
 		selectorOpen = false;
-	}
-
-	// function getUnFoundTargets() {
-	// 	//
-	// }
-
-	function handleClick(
-		clickX: number,
-		clickY: number,
-		targetId: number,
-		feedbackX: number,
-		feedbackY: number
-	) {
-		console.log(`You clicked on ${targetId}`);
-		console.log({ clickX, clickY, feedbackX, feedbackY });
 	}
 </script>
 
@@ -120,7 +105,7 @@
 <div class="game-board" bind:this={boardEl}>
 	<div
 		class="image-wrap"
-		class:active={phase === 'playing'}
+		class:active={getPhase() === 'playing'}
 		role="button"
 		tabindex="0"
 		onclick={onImageClick}
@@ -170,6 +155,24 @@
 	{/if}
 
 	<!-- Hit/Miss feedback -->
+	{#if getFeedback()}
+		{@const fb = getFeedback()!}
+		{@const boardRect = boardEl.getBoundingClientRect()}
+
+		{#if boardRect}
+			<div
+				class="feedback"
+				class:hit={fb.type === 'hit'}
+				class:miss={fb.type === 'miss'}
+				style="left: {fb.locationX - boardRect.left}px; top: {fb.locationY -
+					boardRect.top}px"
+			>
+				<span class="feedback-text">
+					{fb.type === 'hit' ? `Found ${fb.targetName}!` : 'Not here!'}
+				</span>
+			</div>
+		{/if}
+	{/if}
 </div>
 
 <style>
@@ -331,6 +334,36 @@
 		object-fit: cover;
 	}
 
+	/* -- Feedback -- */
+	.feedback {
+		position: absolute;
+		z-index: 30;
+		transform: translate(-50%, -120%);
+		pointer-events: none;
+		animation: feedbackPop 300ms var(--ease-spring);
+	}
+
+	.feedback-text {
+		display: block;
+		padding: 0.35rem 0.75rem;
+		border-radius: var(--radius-md);
+		font-size: 0.8rem;
+		font-weight: 700;
+		white-space: nowrap;
+	}
+
+	.feedback.hit .feedback-text {
+		color: #0a2015;
+		background: var(--color-accent-green);
+		box-shadow: 0 4px 16px rgba(93 217 122 / 0.4);
+	}
+
+	.feedback.miss .feedback-text {
+		color: #fff;
+		background: var(--color-accent-red);
+		box-shadow: 0 4px 16px rgba(293 95 95 / 0.4);
+	}
+
 	/* -- Animation -- */
 	@keyframes ringPulse {
 		from {
@@ -351,6 +384,17 @@
 		to {
 			translate: 0 0;
 			opacity: 1;
+		}
+	}
+
+	@keyframes feedbackPop {
+		from {
+			opacity: 0;
+			transform: translate(-50%, -100%) scale(0.6);
+		}
+		to {
+			opacity: 1;
+			transform: translate(-50%, -120%) scale(1);
 		}
 	}
 </style>
