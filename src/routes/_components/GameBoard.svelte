@@ -5,8 +5,12 @@
 		handleClick,
 		isTargetFound
 	} from '$lib/game-state.svelte';
-	import { MENU_HEIGHT, MENU_WIDTH, RING_OFFSET } from '$lib/utils/constants';
 	import { tick } from 'svelte';
+
+	const MENU_WIDTH = 150;
+	const MENU_HEIGHT = 130;
+	const RING_OFFSET = 30;
+	const FEEDBACK_MARGIN = 42;
 
 	type TargetInfo = {
 		id: number;
@@ -25,6 +29,11 @@
 	// Selector popup state
 	let selectorOpen = $state(false);
 
+	// Actual click position - never overridden
+	let clickX = $state(0);
+	let clickY = $state(0);
+
+	// Menu position - may be adjusted for small screens
 	let selectorX = $state(0);
 	let selectorY = $state(0);
 
@@ -48,8 +57,11 @@
 		clickPercentY = (e.clientY - rect.top) / rect.height;
 
 		const boardRect = boardEl.getBoundingClientRect();
-		selectorX = e.clientX - boardRect.left;
-		selectorY = e.clientY - boardRect.top;
+
+		clickX = e.clientX - boardRect.left;
+		clickY = e.clientY - boardRect.top;
+		selectorX = clickX;
+		selectorY = clickY;
 
 		// X: flip left if not enough space on the right
 		menuPlacementX =
@@ -89,8 +101,8 @@
 			clickPercentX,
 			clickPercentY,
 			targetId,
-			selectorX + boardRect.left,
-			selectorY + boardRect.top
+			clickX + boardRect.left,
+			clickY + boardRect.top
 		);
 	}
 
@@ -133,10 +145,13 @@
 	<!-- Target selector popup menu -->
 
 	{#if selectorOpen}
-		<div class="selector" style="left: {selectorX}px; top: {selectorY}px">
-			<!-- Click Marker -->
+		<!-- Ring always at true click position -->
+		<div class="click-ring-anchor" style="left: {clickX}px; top: {clickY}px">
 			<div class="click-ring"></div>
+		</div>
 
+		<!-- Menu at adjusted position -->
+		<div class="selector" style="left: {selectorX}px; top: {selectorY}px">
 			<div
 				class="selector-menu"
 				class:place-left={menuPlacementX === 'left'}
@@ -167,14 +182,22 @@
 	{#if getFeedback()}
 		{@const fb = getFeedback()!}
 		{@const boardRect = boardEl.getBoundingClientRect()}
+		{@const clampedX = Math.min(
+			Math.max(fb.locationX - boardRect.left, FEEDBACK_MARGIN),
+			boardRect.width - FEEDBACK_MARGIN
+		)}
+
+		{@const clampedY = Math.min(
+			Math.max(fb.locationY - boardRect.top, FEEDBACK_MARGIN),
+			boardRect.height - FEEDBACK_MARGIN
+		)}
 
 		{#if boardRect}
 			<div
 				class="feedback"
 				class:hit={fb.type === 'hit'}
 				class:miss={fb.type === 'miss'}
-				style="left: {fb.locationX - boardRect.left}px; top: {fb.locationY -
-					boardRect.top}px"
+				style="left: {clampedX}px; top: {clampedY}px"
 			>
 				<span class="feedback-text">
 					{fb.type === 'hit' ? `Found ${fb.targetName}!` : 'Not here!'}
@@ -218,6 +241,13 @@
 		transform: translate(-50%, -50%);
 	}
 
+	.click-ring-anchor {
+		position: absolute;
+		z-index: 20;
+		pointer-events: none;
+		transform: translate(-50%, -50%);
+	}
+
 	.click-ring {
 		position: absolute;
 		top: 50%;
@@ -233,7 +263,7 @@
 
 	.selector-menu {
 		position: absolute;
-		min-width: 160px;
+		min-width: 135px;
 		top: 50%;
 		left: calc(50% + 30px);
 		transform: translateY(-50%);
@@ -300,7 +330,8 @@
 		text-transform: uppercase;
 		letter-spacing: 0.1rem;
 		padding: 0.25rem 0.5rem;
-		color: var(--color-text-dim);
+		color: var(--color-text-muted);
+		border-bottom: 1px solid var(--color-border);
 	}
 
 	.selector-option {
