@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { getFeedback, getPhase, handleClick } from '$lib/game-state.svelte';
+	import {
+		getFeedback,
+		getPhase,
+		handleClick,
+		isTargetFound
+	} from '$lib/game-state.svelte';
 	import { MENU_HEIGHT, MENU_WIDTH, RING_OFFSET } from '$lib/utils/constants';
 	import { tick } from 'svelte';
 
@@ -92,6 +97,10 @@
 	function closeSelector() {
 		selectorOpen = false;
 	}
+
+	function getUnFoundTargets() {
+		return targets.filter((t) => !isTargetFound(t.id));
+	}
 </script>
 
 <svelte:window
@@ -136,7 +145,7 @@
 			>
 				<span class="selector-label">Who is this?</span>
 
-				{#each targets as target (target.id)}
+				{#each getUnFoundTargets() as target (target.id)}
 					<button
 						class="selector-option"
 						data-accent={target.name}

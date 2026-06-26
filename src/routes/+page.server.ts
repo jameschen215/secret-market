@@ -45,6 +45,8 @@ export const actions = {
 		const result = submitScoreSchema.safeParse(raw);
 
 		if (!result.success) {
+			console.log(result.error.issues[0].message);
+
 			return fail(400, {
 				error: result.error.issues[0].message,
 				errorCode: 'VALIDATION',
@@ -53,6 +55,8 @@ export const actions = {
 		}
 
 		const { token, durationMs, playerName } = result.data;
+
+		console.log(result.data);
 
 		// Token verification
 		const payload = verifyToken(token);
