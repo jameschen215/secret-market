@@ -23,7 +23,7 @@ export const submitScoreSchema = z.object({
 	token: z
 		.string({ error: 'token is required' })
 		.min(1, 'token cannot be empty'),
-	durationMs: z
+	durationMs: z.coerce
 		.number({ error: 'durationMs is required' })
 		.int()
 		.positive('durationMs must be positive'),
