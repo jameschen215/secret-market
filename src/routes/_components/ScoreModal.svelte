@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { formatTime } from '$lib/utils/formatter';
+	import type { ActionData } from '../$types';
 	import type { SubmitFunction } from '@sveltejs/kit';
+
+	import { formatTime } from '$lib/utils/formatter';
+	import { getElapsed, getToken, resetGame } from '$lib/game-state.svelte';
+
+	let { formResult }: { formResult: ActionData } = $props();
 
 	let submitting = $state(false);
 
-	let isFlagged = $state(false);
-	let isRetryable = $state(false);
+	// errorCode tells us which failure state to show
+	const errorCode = $derived(formResult?.errorCode ?? null);
+	let isFlagged = $derived(errorCode === 'FLAGGED');
+	let isRetryable = $derived(errorCode === 'SERVER_ERROR');
 
 	let inputEl = $state<HTMLInputElement | undefined>(undefined);
 
@@ -32,10 +39,6 @@
 		class="modal"
 		use:enhance={onSubmit}
 	>
-		<!-- Hidden fields for server  -->
-		<input type="hidden" name="token" value="" />
-		<input type="hidden" name="durationMs" value="" />
-
 		<!-- Icon - trophy for success state, warning for error state -->
 		<div class="icon-wrap" class:error-icon={isFlagged || isRetryable}>
 			{#if isFlagged || isRetryable}
@@ -74,7 +77,7 @@
 
 		<div class="time-display">
 			<span class="time-label">Your Time</span>
-			<span class="time-value">{formatTime(2345)}</span>
+			<span class="time-value">{formatTime(getElapsed())}</span>
 		</div>
 
 		<!-- Flagged - no retry, just close -->
@@ -84,44 +87,48 @@
 				modified or expired.
 			</p>
 
-			<button
-				type="button"
-				class="close-btn"
-				onclick={() => console.log('Reset Game')}
-			>
+			<button type="button" class="close-btn" onclick={resetGame}>
 				Close
 			</button>
 		{:else if isRetryable}
-			<p class="server-error-msg">form result error</p>
+			<p class="server-error-msg">{formResult?.error}</p>
 
 			<div class="error-actions">
 				<button type="button" class="submit-btn retry" disabled={submitting}>
 					{submitting ? 'Retrying...' : 'Try Again'}
 				</button>
 
-				<button
-					type="button"
-					class="close-btn secondary"
-					onclick={() => console.log('Reset Game')}
-				>
+				<button type="button" class="close-btn secondary" onclick={resetGame}>
 					Close
 				</button>
 			</div>
 		{:else}
 			<div class="input-group">
-				<label for="player-name" class="input-label">Enter your name</label>
+				<!-- Hidden fields for server  -->
+				<input type="hidden" name="token" value={getToken()} />
+				<input
+					type="hidden"
+					name="durationMs"
+					value={Math.round(getElapsed())}
+				/>
+
+				<label for="playerName" class="input-label">Enter your name</label>
 				<input
 					type="text"
-					id="player-name"
+					id="playerName"
+					name="playerName"
 					class="name-input"
 					placeholder="Adventurer"
 					maxlength="20"
 					disabled={submitting}
 					bind:this={inputEl}
-					value=""
+					value={formResult?.playerName ?? ''}
 				/>
 
 				<!-- form error -->
+				{#if formResult?.error}
+					<span class="error">{formResult.error}</span>
+				{/if}
 
 				<button type="submit" class="submit-btn" disabled={submitting}>
 					{submitting ? 'Submitting' : 'Submit Score'}

@@ -12,7 +12,10 @@
 	import ScoreModal from './_components/ScoreModal.svelte';
 	import TargetPanel from './_components/TargetPanel.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
+
+	let formResult = $derived(form);
+
 	let starting = $state(false);
 	let errorMsg = $state('');
 
@@ -180,7 +183,7 @@
 	<!-- Score Modal -->
 
 	{#if getPhase() === 'completed'}
-		<ScoreModal />
+		<ScoreModal {formResult} />
 	{/if}
 </div>
 
