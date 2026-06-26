@@ -174,9 +174,11 @@
 
 <style>
 	.page {
+		flex: 1;
 		max-width: 680px;
+		width: 100%;
 		margin: 0 auto;
-		padding: 2rem 1.5rem 4rem;
+		padding: 0 1rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
@@ -187,6 +189,7 @@
 		align-items: flex-end;
 		justify-content: space-between;
 		gap: 1rem;
+		margin: 2rem 0;
 	}
 
 	.title {
@@ -256,6 +259,7 @@
 
 	/* TABLE */
 	.table-wrap {
+		min-height: 519px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 		overflow: hidden;

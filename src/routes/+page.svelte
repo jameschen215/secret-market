@@ -86,7 +86,6 @@
 	<!-- Main Layout - game board + sidebar -->
 	<div class="layout">
 		<!-- Game Board -->
-
 		<div class="game-board">
 			<GameBoard imagePath={data.game.imagePath} targets={data.targets} />
 
@@ -164,22 +163,6 @@
 		</aside>
 	</div>
 
-	<footer class="footer">
-		<p>
-			2025 &copy; Odin Project Assignment by
-			<a
-				href="https://github.com/jameschen215"
-				target="_blank"
-				aria-label="Go to author's Github repository"
-				class=""
-			>
-				James Chen.
-				<span class="sr-only">Open in new tab</span>
-			</a>
-		</p>
-		<p>All rights reserved.</p>
-	</footer>
-
 	<!-- Score Modal -->
 
 	{#if getPhase() === 'completed'}
@@ -189,18 +172,19 @@
 
 <style>
 	.page {
-		min-height: 100dvh;
+		flex: 1;
 		max-width: 1280px;
 		margin: 0 auto;
-		padding: 2.4rem 1rem 0;
+		padding: 0 1rem;
+		gap: 1rem;
+
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		gap: 1rem;
 	}
 
 	/* Header */
 	.header {
+		margin: 2rem 0;
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
@@ -237,6 +221,10 @@
 	/* Game Board */
 	.game-board {
 		position: relative;
+		flex: 1;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
 	.board-overlay-mobile {
@@ -353,30 +341,6 @@
 		text-align: center;
 	}
 
-	.footer {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.25rem;
-		color: var(--color-text-muted);
-		font-size: 0.8rem;
-		padding: 0.25rem;
-	}
-
-	.footer a {
-		color: inherit;
-		font-weight: 600;
-		text-decoration: none;
-		transition: all 200ms ease;
-	}
-
-	.footer a:hover,
-	.footer a:active {
-		color: var(--color-text);
-		text-decoration: underline;
-		opacity: 0.75;
-	}
-
 	/* -- Animation -- */
 	@keyframes overlayPulse {
 		0%,
@@ -394,6 +358,7 @@
 	@media (max-width: 1024px) {
 		.page {
 			gap: 0.75rem;
+			margin: 1.5rem 0;
 		}
 
 		.title {
