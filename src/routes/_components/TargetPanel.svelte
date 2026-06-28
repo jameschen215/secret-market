@@ -1,12 +1,6 @@
 <script lang="ts">
+	import type { TargetInfo } from '$lib/types';
 	import { getPhase, isTargetFound } from '$lib/game-state.svelte';
-
-	type TargetInfo = {
-		id: number;
-		name: string;
-		displayName: string;
-		imagePath: string;
-	};
 
 	let { targets }: { targets: TargetInfo[] } = $props();
 </script>

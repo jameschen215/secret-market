@@ -54,7 +54,6 @@ model Target {
 
   game Game @relation(fields: [gameId], references: [id])
 
-  // hits Hit[]
   hits Hit[]
 
   @@map("targets")

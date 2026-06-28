@@ -316,11 +316,11 @@
 		opacity: 0.5;
 	}
 
-	/* .error {
+	.error {
 		font-size: 0.78rem;
 		font-weight: 600;
 		color: var(--color-accent-red);
-	} */
+	}
 
 	.submit-btn {
 		width: 100%;

@@ -1,5 +1,5 @@
-import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Prisma } from '../src/generated/prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 
@@ -80,7 +80,7 @@ const sagePolygon: PolygonPoint[] = [
 	{ x: 0.7168, y: 0.4831 }
 ];
 
-const gameImageData = [
+const gameData: Prisma.GameCreateInput[] = [
 	{
 		slug: 'secret-market',
 		title: 'Secret Market',
@@ -121,7 +121,7 @@ async function main() {
 	await prisma.target.deleteMany();
 	await prisma.game.deleteMany();
 
-	for (const data of gameImageData) {
+	for (const data of gameData) {
 		await prisma.game.create({ data });
 	}
 }

@@ -45,8 +45,6 @@ export const actions = {
 		const result = submitScoreSchema.safeParse(raw);
 
 		if (!result.success) {
-			console.log(result.error.issues[0].message);
-
 			return fail(400, {
 				error: result.error.issues[0].message,
 				errorCode: 'VALIDATION',
@@ -55,8 +53,6 @@ export const actions = {
 		}
 
 		const { token, durationMs, playerName } = result.data;
-
-		console.log(result.data);
 
 		// Token verification
 		const payload = verifyToken(token);
@@ -102,21 +98,10 @@ export const actions = {
 
 		// Timing validation
 		const serverElapsedMs = Date.now() - payload.startedAt;
+		const timingInvalid =
+			durationMs < session.game.minTimeMs || durationMs > serverElapsedMs;
 
-		if (durationMs < session.game.minTimeMs) {
-			await prisma.gameSession.update({
-				where: { id: session.id },
-				data: { status: 'FLAGGED' }
-			});
-
-			return fail(400, {
-				error: 'Score could not be verified',
-				errorCode: 'FLAGGED',
-				playerName
-			});
-		}
-
-		if (durationMs > serverElapsedMs) {
+		if (timingInvalid) {
 			await prisma.gameSession.update({
 				where: { id: session.id },
 				data: { status: 'FLAGGED' }

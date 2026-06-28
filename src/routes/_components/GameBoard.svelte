@@ -1,23 +1,17 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import {
 		getFeedback,
 		getPhase,
 		handleClick,
 		isTargetFound
 	} from '$lib/game-state.svelte';
-	import { tick } from 'svelte';
+	import type { TargetInfo } from '$lib/types';
 
 	const MENU_WIDTH = 150;
 	const MENU_HEIGHT = 130;
 	const RING_OFFSET = 30;
 	const FEEDBACK_MARGIN = 42;
-
-	type TargetInfo = {
-		id: number;
-		name: string;
-		displayName: string;
-		imagePath: string;
-	};
 
 	interface Props {
 		imagePath: string;
@@ -25,6 +19,8 @@
 	}
 
 	const { imagePath, targets }: Props = $props();
+
+	const unFoundTargets = $derived(targets.filter((t) => !isTargetFound(t.id)));
 
 	// Selector popup state
 	let selectorOpen = $state(false);
@@ -109,10 +105,6 @@
 	function closeSelector() {
 		selectorOpen = false;
 	}
-
-	function getUnFoundTargets() {
-		return targets.filter((t) => !isTargetFound(t.id));
-	}
 </script>
 
 <svelte:window
@@ -160,7 +152,7 @@
 			>
 				<span class="selector-label">Who is this?</span>
 
-				{#each getUnFoundTargets() as target (target.id)}
+				{#each unFoundTargets as target (target.id)}
 					<button
 						class="selector-option"
 						data-accent={target.name}
@@ -192,18 +184,16 @@
 			boardRect.height - FEEDBACK_MARGIN
 		)}
 
-		{#if boardRect}
-			<div
-				class="feedback"
-				class:hit={fb.type === 'hit'}
-				class:miss={fb.type === 'miss'}
-				style="left: {clampedX}px; top: {clampedY}px"
-			>
-				<span class="feedback-text">
-					{fb.type === 'hit' ? `Found ${fb.targetName}!` : 'Not here!'}
-				</span>
-			</div>
-		{/if}
+		<div
+			class="feedback"
+			class:hit={fb.type === 'hit'}
+			class:miss={fb.type === 'miss'}
+			style="left: {clampedX}px; top: {clampedY}px"
+		>
+			<span class="feedback-text">
+				{fb.type === 'hit' ? `Found ${fb.targetName}!` : 'Not here!'}
+			</span>
+		</div>
 	{/if}
 </div>
 
@@ -302,27 +292,6 @@
 	.selector-menu.place-above {
 		transform: translateY(0);
 	}
-
-	.selector-menu.place-left {
-		--menu-translate-x-from: 8px; /* slide from the other direction */
-	}
-
-	/* Combined: left + below */
-	/* .selector-menu.place-left.place-below {
-		left: auto;
-		right: calc(50% + 24px);
-		top: calc(50% + 24px);
-		transform: translateY(0);
-	} */
-
-	/* Combined: left + above */
-	/* .selector-menu.place-left.place-above {
-		top: auto;
-		left: auto;
-		right: calc(50% + 24px);
-		bottom: calc(50% + 24px);
-		transform: translateY(0);
-	} */
 
 	.selector-label {
 		font-size: 0.65rem;

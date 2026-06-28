@@ -138,7 +138,6 @@
 						type="button"
 						class="stop-btn"
 						aria-label="Stop Game"
-						disabled={!starting}
 						onclick={onStop}
 					>
 						Stop Game
@@ -450,11 +449,6 @@
 		.start-btn-desktop,
 		.leaderboard-btn-desktop {
 			display: none;
-		}
-
-		.footer {
-			flex-direction: column;
-			gap: 0;
 		}
 	}
 </style>

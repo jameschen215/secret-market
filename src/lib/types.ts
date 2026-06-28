@@ -27,3 +27,10 @@ export interface TokenPayload {
 	gameId: number;
 	startedAt: number; // Unix timestamp in ms
 }
+
+export interface TargetInfo {
+	id: number;
+	name: string;
+	displayName: string;
+	imagePath: string;
+}

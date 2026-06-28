@@ -3,19 +3,16 @@ import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 10;
 
+function getIntParam(url: URL, key: string): number | null {
+	const val = url.searchParams.get(key);
+
+	return val ? parseInt(val, 10) : null;
+}
+
 export const load: PageServerLoad = async ({ url }) => {
-	const highlightRank = url.searchParams.get('rank')
-		? parseInt(url.searchParams.get('rank')!)
-		: null;
-
-	const highlightTime = url.searchParams.get('time')
-		? parseInt(url.searchParams.get('time')!)
-		: null;
-
-	const page = Math.max(
-		1,
-		url.searchParams.get('page') ? parseInt(url.searchParams.get('page')!) : 1
-	);
+	const highlightRank = getIntParam(url, 'rank');
+	const highlightTime = getIntParam(url, 'time');
+	const page = Math.max(1, getIntParam(url, 'page') ?? 1);
 
 	const [scores, totalCount, game] = await Promise.all([
 		prisma.score.findMany({
