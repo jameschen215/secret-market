@@ -60,4 +60,11 @@
 		text-decoration: underline;
 		opacity: 0.75;
 	}
+
+	@media (max-width: 1024px) {
+		.footer {
+			flex-direction: column;
+			gap: 0;
+		}
+	}
 </style>
