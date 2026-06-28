@@ -328,6 +328,12 @@
 
 	.col-name {
 		font-weight: 600;
+		width: 100%; /* take all remaining space after fixed columns */
+		min-width: 0; /* allow shrinking below content size */
+		max-width: 0; /* force overflow onto the ellipsis */
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.col-time {
@@ -403,5 +409,11 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--color-text-muted);
+	}
+
+	@media (max-width: 640px) {
+		.col-name {
+			max-width: 96px;
+		}
 	}
 </style>
