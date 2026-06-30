@@ -16,7 +16,11 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	const [scores, totalCount, game] = await Promise.all([
 		prisma.score.findMany({
-			orderBy: { timeMs: 'asc' },
+			orderBy: [
+				{ trustStatus: 'asc' },
+				{ timeMs: 'asc' },
+				{ createdAt: 'asc' }
+			],
 			take: PAGE_SIZE,
 			skip: (page - 1) * PAGE_SIZE,
 			select: {
@@ -48,6 +52,11 @@ export const load: PageServerLoad = async ({ url }) => {
 	const playerScore = playerScoreNotOnCurrentPage
 		? await prisma.score.findFirst({
 				where: { timeMs: highlightTime },
+				orderBy: [
+					{ trustStatus: 'asc' },
+					{ timeMs: 'asc' },
+					{ createdAt: 'asc' }
+				],
 				select: {
 					id: true,
 					playerName: true,

@@ -174,7 +174,10 @@ export const actions = {
 		]);
 
 		const rank = await prisma.score.count({
-			where: { timeMs: { lt: score.timeMs } }
+			where: {
+				timeMs: { lt: score.timeMs },
+				trustStatus: 'TRUSTED'
+			}
 		});
 
 		return {
