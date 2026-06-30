@@ -65,6 +65,7 @@
 						<th class="col-rank">Rank</th>
 						<th class="col-name">Name</th>
 						<th class="col-time">Time</th>
+						<th class="col-credible">Credible</th>
 						<th class="col-date">Date</th>
 					</tr>
 				</thead>
@@ -93,14 +94,24 @@
 							</td>
 							<td class="col-name">
 								<span class="player-name">{score.playerName}</span>
-								{#if isUntrusted}
-									<span class="trust-badge" title={score.trustReason ?? ''}>
-										Untrusted
-									</span>
-								{/if}
 							</td>
 
 							<td class="col-time">{formatTime(score.timeMs)}</td>
+							<td class="col-credible">
+								{#if isUntrusted}
+									<span
+										class="trust-mark untrusted-mark"
+										title={score.trustReason ?? 'Untrusted score'}
+										aria-label="Not credible"
+									>
+										x
+									</span>
+								{:else}
+									<span class="trust-mark trusted-mark" aria-label="Credible">
+										check
+									</span>
+								{/if}
+							</td>
 							<td class="col-date">{formatDate(score.createdAt)}</td>
 						</tr>
 					{/each}
@@ -121,17 +132,24 @@
 								</td>
 								<td class="col-name">
 									<span class="player-name">{data.playerScore.playerName}</span>
-									{#if isUntrusted}
-										<span
-											class="trust-badge"
-											title={data.playerScore.trustReason ?? ''}
-										>
-											Untrusted
-										</span>
-									{/if}
 								</td>
 								<td class="col-time">
 									{formatTime(data.playerScore.timeMs)}
+								</td>
+								<td class="col-credible">
+									{#if isUntrusted}
+										<span
+											class="trust-mark untrusted-mark"
+											title={data.playerScore.trustReason ?? 'Untrusted score'}
+											aria-label="Not credible"
+										>
+											x
+										</span>
+									{:else}
+										<span class="trust-mark trusted-mark" aria-label="Credible">
+											check
+										</span>
+									{/if}
 								</td>
 								<td class="col-date">
 									{formatDate(data.playerScore.createdAt)}
@@ -377,26 +395,49 @@
 
 	.player-name {
 		display: inline-block;
-		margin-right: 0.45rem;
 	}
 
-	.trust-badge {
+	.col-credible {
+		width: 92px;
+		text-align: center;
+	}
+
+	.trust-mark {
 		display: inline-flex;
 		align-items: center;
-		vertical-align: middle;
-		padding: 0.15rem 0.4rem;
-		border: 1px solid rgba(239 95 95 / 0.35);
-		border-radius: var(--radius-sm);
+		justify-content: center;
+		width: 1.4rem;
+		height: 1.4rem;
+		border-radius: 50%;
+		font-size: 0;
+		font-weight: 900;
+	}
+
+	.trust-mark::before {
+		font-size: 0.9rem;
+		line-height: 1;
+	}
+
+	.trusted-mark {
+		color: var(--color-accent-green);
+		background: rgba(93 217 122 / 0.1);
+	}
+
+	.trusted-mark::before {
+		content: '✓';
+	}
+
+	.untrusted-mark {
 		color: var(--color-accent-red);
 		background: rgba(239 95 95 / 0.1);
-		font-size: 0.65rem;
-		font-weight: 800;
-		text-transform: uppercase;
-		letter-spacing: 0.08rem;
+	}
+
+	.untrusted-mark::before {
+		content: '×';
 	}
 
 	.col-time {
-		width: 120px;
+		width: 112px;
 		font-family: var(--font-mono);
 		font-weight: 600;
 		font-size: 0.85rem;
