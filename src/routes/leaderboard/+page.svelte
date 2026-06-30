@@ -515,5 +515,9 @@
 		.col-name {
 			max-width: 96px;
 		}
+
+		.col-credible {
+			display: none;
+		}
 	}
 </style>
