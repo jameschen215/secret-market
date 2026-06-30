@@ -24,5 +24,4 @@ vite.config.ts.timestamp-*
 
 codebase.md
 /prisma/src/generated/prisma
-/prisma/migrations
 /src/generated/prisma

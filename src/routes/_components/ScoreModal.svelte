@@ -5,6 +5,8 @@
 
 	import { formatTime } from '$lib/utils/formatter';
 	import { getElapsed, getToken, resetGame } from '$lib/game-state.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let { formResult }: { formResult: ActionData } = $props();
 
@@ -14,6 +16,7 @@
 	const errorCode = $derived(formResult?.errorCode ?? null);
 	let isFlagged = $derived(errorCode === 'FLAGGED');
 	let isRetryable = $derived(errorCode === 'SERVER_ERROR');
+	let isSuccess = $derived(formResult?.success === true);
 
 	let inputEl = $state<HTMLInputElement | undefined>(undefined);
 
@@ -30,29 +33,23 @@
 			await update();
 		};
 	};
+
+	function viewLeaderboard() {
+		if (!isSuccess || !formResult) return;
+
+		goto(
+			resolve(
+				`/leaderboard?rank=${formResult.rank}&time=${formResult.officialDuration}`
+			)
+		);
+	}
 </script>
 
 <div class="overlay">
-	<form
-		action="?/submitScore"
-		method="post"
-		class="modal"
-		use:enhance={onSubmit}
-	>
-		<!-- Icon - trophy for success state, warning for error state -->
-		<div class="icon-wrap" class:error-icon={isFlagged || isRetryable}>
-			{#if isFlagged || isRetryable}
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-				>
-					<path
-						d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-					/>
-				</svg>
-			{:else}
+	{#if isSuccess && formResult}
+		<!-- Success state - score accepted, show official result -->
+		<div class="modal">
+			<div class="icon-wrap">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
@@ -64,78 +61,144 @@
 					/>
 					<path d="M7 3v6a5 5 0 0 0 10 0V3" />
 				</svg>
+			</div>
+
+			<h2 class="modal-title">All Found!</h2>
+
+			<div class="time-display">
+				<span class="time-label">Your Time</span>
+				<span class="time-value">{formatTime(formResult.displayDuration!)}</span
+				>
+			</div>
+			{#if formResult.showOfficialDuration}
+				<div class="time-display official">
+					<span class="time-label">Official Time</span>
+					<span class="time-value">
+						{formatTime(formResult.officialDuration!)}
+					</span>
+				</div>
 			{/if}
-		</div>
 
-		<h2 class="modal-title" class:error-title={isFlagged || isRetryable}>
-			{isFlagged
-				? 'Score Not Verified'
-				: isRetryable
-					? 'Submission Failed'
-					: 'All Found!'}
-		</h2>
+			{#if formResult.showVerificationNotice}
+				<div class="time-display official">
+					<p class="verified-note">✓ Verified by server</p>
+				</div>
+			{/if}
 
-		<div class="time-display">
-			<span class="time-label">Your Time</span>
-			<span class="time-value">{formatTime(getElapsed())}</span>
-		</div>
-
-		<!-- Flagged - no retry, just close -->
-		{#if isFlagged}
-			<p class="flagged-msg">
-				Your score could not be verified. This can happen if the session was
-				modified or expired.
-			</p>
-
-			<button type="button" class="close-btn" onclick={resetGame}>
-				Close
+			<button type="button" class="submit-btn" onclick={viewLeaderboard}>
+				View Leaderboard
 			</button>
-		{:else if isRetryable}
-			<p class="server-error-msg">{formResult?.error}</p>
+		</div>
+	{:else}
+		<!-- Form state - either initial submission, error, or retry -->
+		<form
+			action="?/submitScore"
+			method="post"
+			class="modal"
+			use:enhance={onSubmit}
+		>
+			<input type="hidden" name="token" value={getToken()} />
+			<input
+				type="hidden"
+				name="clientDuration"
+				value={Math.round(getElapsed())}
+			/>
 
-			<div class="error-actions">
-				<button type="button" class="submit-btn retry" disabled={submitting}>
-					{submitting ? 'Retrying...' : 'Try Again'}
-				</button>
+			<!-- Icon - trophy for success state, warning for error state -->
+			<div class="icon-wrap" class:error-icon={isFlagged || isRetryable}>
+				{#if isFlagged || isRetryable}
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+						/>
+					</svg>
+				{:else}
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M8 21h8m-4-4v4m-5-8a5 5 0 0 1-3-1 3 3 0 0 1 0-6h1V3h14v3h1a3 3 0 0 1 0 6 5 5 0 0 1-3 1"
+						/>
+						<path d="M7 3v6a5 5 0 0 0 10 0V3" />
+					</svg>
+				{/if}
+			</div>
 
-				<button type="button" class="close-btn secondary" onclick={resetGame}>
+			<h2 class="modal-title" class:error-title={isFlagged || isRetryable}>
+				{isFlagged
+					? 'Score Not Verified'
+					: isRetryable
+						? 'Submission Failed'
+						: 'All Found!'}
+			</h2>
+
+			<div class="time-display">
+				<span class="time-label">Your Time</span>
+				<span class="time-value">{formatTime(getElapsed())}</span>
+			</div>
+
+			<!-- Flagged - no retry, just close -->
+			{#if isFlagged}
+				<p class="flagged-msg">
+					Your score could not be verified. This can happen if the session was
+					modified or expired.
+				</p>
+
+				<button type="button" class="close-btn" onclick={resetGame}>
 					Close
 				</button>
-			</div>
-		{:else}
-			<div class="input-group">
-				<!-- Hidden fields for server  -->
-				<input type="hidden" name="token" value={getToken()} />
+			{:else if isRetryable}
+				<p class="server-error-msg">{formResult?.error}</p>
 				<input
 					type="hidden"
-					name="durationMs"
-					value={Math.round(getElapsed())}
-				/>
-
-				<label for="playerName" class="input-label">Enter your name</label>
-				<input
-					type="text"
-					id="playerName"
 					name="playerName"
-					class="name-input"
-					placeholder="Adventurer"
-					maxlength="20"
-					disabled={submitting}
-					bind:this={inputEl}
 					value={formResult?.playerName ?? ''}
 				/>
 
-				<!-- form error -->
-				{#if formResult?.error}
-					<span class="error">{formResult.error}</span>
-				{/if}
+				<div class="error-actions">
+					<button type="submit" class="submit-btn retry" disabled={submitting}>
+						{submitting ? 'Retrying...' : 'Try Again'}
+					</button>
 
-				<button type="submit" class="submit-btn" disabled={submitting}>
-					{submitting ? 'Submitting' : 'Submit Score'}
-				</button>
-			</div>
-		{/if}
-	</form>
+					<button type="button" class="close-btn secondary" onclick={resetGame}>
+						Close
+					</button>
+				</div>
+			{:else}
+				<div class="input-group">
+					<label for="playerName" class="input-label">Enter your name</label>
+					<input
+						type="text"
+						id="playerName"
+						name="playerName"
+						class="name-input"
+						placeholder="Adventurer"
+						maxlength="20"
+						disabled={submitting}
+						bind:this={inputEl}
+						value={formResult?.playerName ?? ''}
+					/>
+
+					<!-- form error -->
+					{#if formResult?.error}
+						<span class="error">{formResult.error}</span>
+					{/if}
+
+					<button type="submit" class="submit-btn" disabled={submitting}>
+						{submitting ? 'Submitting' : 'Submit Score'}
+					</button>
+				</div>
+			{/if}
+		</form>
+	{/if}
 </div>
 
 <style>
@@ -348,6 +411,18 @@
 	.submit-btn:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+
+	/* Added style */
+	.time-display.official {
+		margin-top: -0.5rem;
+	}
+
+	.verified-note {
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--color-accent-green);
+		margin-top: 0.15rem;
 	}
 
 	/* -- Animation -- */
