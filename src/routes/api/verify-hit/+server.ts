@@ -4,7 +4,29 @@ import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { checkHit } from '$lib/hit-detection';
 import { verifyHitSchema } from '$lib/schema';
+import { hashToken, verifyToken } from '$lib/server/crypto';
 import type { BoundingBox, PolygonPoint } from '$lib/types';
+
+const RATE_LIMIT_WINDOW_MS = 10_000;
+const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 12;
+
+const verifyAttempts = new Map<string, number[]>();
+
+function assertWithinRateLimit(sessionId: string) {
+	const now = Date.now();
+	const windowStart = now - RATE_LIMIT_WINDOW_MS;
+	const attempts = (verifyAttempts.get(sessionId) ?? []).filter(
+		(timestamp) => timestamp > windowStart
+	);
+
+	if (attempts.length >= MAX_VERIFY_ATTEMPTS_PER_WINDOW) {
+		verifyAttempts.set(sessionId, attempts);
+		throw error(429, 'Too many verification attempts');
+	}
+
+	attempts.push(now);
+	verifyAttempts.set(sessionId, attempts);
+}
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
@@ -15,24 +37,35 @@ export const POST: RequestHandler = async ({ request }) => {
 		throw error(400, result.error.issues[0].message);
 	}
 
-	const { sessionId, targetId, clickX, clickY } = result.data;
+	const { token, targetId, clickX, clickY } = result.data;
+	const payload = verifyToken(token);
 
-	// Load session and verify it's active
+	if (!payload) {
+		throw error(401, 'Invalid or tampered session token');
+	}
+
+	const tokenHashValue = hashToken(token);
 	const session = await prisma.gameSession.findUnique({
-		where: { id: sessionId }
+		where: { tokenHash: tokenHashValue }
 	});
 
 	if (!session) {
 		throw error(404, 'Session not Found');
 	}
 
+	if (session.id !== payload.sessionId || session.gameId !== payload.gameId) {
+		throw error(401, 'Session token does not match this session');
+	}
+
 	if (session.status !== 'ACTIVE') {
 		throw error(400, `Session is ${session.status.toLowerCase()}, not active`);
 	}
 
+	assertWithinRateLimit(session.id);
+
 	// Check if this target was already found in this session
 	const existingHit = await prisma.hit.findUnique({
-		where: { sessionId_targetId: { sessionId, targetId } }
+		where: { sessionId_targetId: { sessionId: session.id, targetId } }
 	});
 
 	if (existingHit) {
@@ -40,12 +73,12 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	// Load real polygon data from DB
-	const target = await prisma.target.findUnique({
-		where: { id: targetId }
+	const target = await prisma.target.findFirst({
+		where: { id: targetId, gameId: session.gameId }
 	});
 
 	if (!target) {
-		throw error(404, 'Target not Found');
+		throw error(404, 'Target not Found for this game');
 	}
 
 	// Server-side ray casting with real (unencrypted) data
@@ -56,7 +89,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	// Record the hit attempt regardless of result
 	await prisma.hit.create({
 		data: {
-			sessionId,
+			sessionId: session.id,
 			targetId,
 			clickX,
 			clickY,
@@ -76,10 +109,21 @@ export const POST: RequestHandler = async ({ request }) => {
 		where: { gameId: session.gameId }
 	});
 	const verifiedHits = await prisma.hit.count({
-		where: { sessionId, verified: true }
+		where: { sessionId: session.id, verified: true }
 	});
 
 	const allFound = verifiedHits >= totalTargets;
+
+	// Stamp the exact moment of completion server-side. This becomes the
+	// authoritative end-of-game timestamp used to compute serverDuration —
+	// it must be recorded here, not at score-submission time, so that
+	// time spent typing a player name is never counted against the score.
+	if (allFound) {
+		await prisma.gameSession.update({
+			where: { id: session.id },
+			data: { completedAt: new Date() }
+		});
+	}
 
 	return json({
 		hit: true,

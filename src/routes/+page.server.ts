@@ -1,8 +1,15 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+
+import { prisma } from '$lib/server/prisma';
 import { submitScoreSchema } from '$lib/schema';
 import { hashToken, verifyToken } from '$lib/server/crypto';
-import { prisma } from '$lib/server/prisma';
+
+// Anti-cheat / UX thresholds for reconciling client and server timing.
+// These are independent concerns and intentionally kept separate:
+const CLIENT_TIME_TOLERANCE_MS = 200; // UX: below this, trust client's displayed time
+const NOTICE_THRESHOLD_MS = 400; // UX: below this, no "verified by server" message
+const MAX_ALLOWED_TIME_DRIFT_MS = 1000; // Security: above this, flag the session
 
 export const load: PageServerLoad = async () => {
 	const game = await prisma.game.findFirst({
@@ -38,7 +45,7 @@ export const actions = {
 		const formData = await request.formData();
 		const raw = {
 			token: formData.get('token'),
-			durationMs: formData.get('durationMs'),
+			clientDuration: formData.get('clientDuration'),
 			playerName: formData.get('playerName')
 		};
 
@@ -52,7 +59,10 @@ export const actions = {
 			});
 		}
 
-		const { token, durationMs, playerName } = result.data;
+		// clientDuration is used only to compute drift for anti-cheat detection
+		// and to decide whether to show a verification notice. It is never
+		// persisted and never trusted as the official score.
+		const { token, clientDuration, playerName } = result.data;
 
 		// Token verification
 		const payload = verifyToken(token);
@@ -96,25 +106,8 @@ export const actions = {
 			});
 		}
 
-		// Timing validation
-		const serverElapsedMs = Date.now() - payload.startedAt;
-		const timingInvalid =
-			durationMs < session.game.minTimeMs || durationMs > serverElapsedMs;
-
-		if (timingInvalid) {
-			await prisma.gameSession.update({
-				where: { id: session.id },
-				data: { status: 'FLAGGED' }
-			});
-
-			return fail(400, {
-				error: 'Score could not be verified',
-				errorCode: 'FLAGGED',
-				playerName
-			});
-		}
-
-		// Hit verification
+		// Hit verification - must happen before timing, since a session that
+		// hasn't found every target has no valid completedAt to trust.
 		const totalTargets = await prisma.target.count({
 			where: { gameId: session.game.id }
 		});
@@ -131,14 +124,52 @@ export const actions = {
 			});
 		}
 
-		// Write Score
+		if (!session.completedAt) {
+			return fail(400, {
+				error: 'Score could not be verified',
+				errorCode: 'SERVER_ERROR',
+				playerName
+			});
+		}
+
+		// clientDuration is never trusted as the official score. It is only
+		// compared against serverDuration to:
+		// 1. detect suspicious drift (anti-cheat),
+		// 2. determine displayDuration (what the UI should show),
+		// 3. determine whether to show a verification notice.
+		const serverDuration = session.completedAt.getTime() - payload.startedAt;
+		const drift = Math.abs(clientDuration - serverDuration);
+
+		if (
+			serverDuration < session.game.minTimeMs ||
+			drift >= MAX_ALLOWED_TIME_DRIFT_MS
+		) {
+			await prisma.gameSession.update({
+				where: { id: session.id },
+				data: { status: 'FLAGGED' }
+			});
+
+			return fail(400, {
+				error: 'Score could not be verified',
+				errorCode: 'FLAGGED',
+				playerName
+			});
+		}
+
+		const displayDuration =
+			drift <= CLIENT_TIME_TOLERANCE_MS ? clientDuration : serverDuration;
+		const showOfficialDuration = drift > CLIENT_TIME_TOLERANCE_MS;
+		const showVerificationNotice = drift >= NOTICE_THRESHOLD_MS;
+
+		// Write Score — always the server-computed duration, regardless of
+		// what is shown to the player in this response.
 		const [score] = await prisma.$transaction([
 			prisma.score.create({
-				data: { sessionId: session.id, playerName, timeMs: durationMs }
+				data: { sessionId: session.id, playerName, timeMs: serverDuration }
 			}),
 			prisma.gameSession.update({
 				where: { id: session.id },
-				data: { status: 'COMPLETED', completedAt: new Date() }
+				data: { status: 'COMPLETED' }
 			})
 		]);
 
@@ -146,6 +177,13 @@ export const actions = {
 			where: { timeMs: { lt: score.timeMs } }
 		});
 
-		redirect(303, `/leaderboard?rank=${rank + 1}&time=${score.timeMs}`);
+		return {
+			success: true,
+			officialDuration: serverDuration,
+			displayDuration,
+			showOfficialDuration,
+			showVerificationNotice,
+			rank: rank + 1
+		};
 	}
 } satisfies Actions;

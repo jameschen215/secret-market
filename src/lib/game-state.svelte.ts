@@ -38,9 +38,7 @@ let decryptionParams = $state<DecryptionParams | null>(null);
 let foundTargetIds = new SvelteSet<number>();
 let feedback = $state<ClickFeedback | null>(null);
 
-// Preloaded session - ready before player clicks start
 let preloading = $state(false);
-let preloadedSession = $state<SessionData | null>(null);
 
 // Timer State
 let timerStart = $state(0);
@@ -68,26 +66,6 @@ function showFeedback(
 	}, FEEDBACK_DURATION);
 }
 
-async function fetchAndPreload(gameId: number) {
-	preloading = true;
-
-	try {
-		const res = await fetch('/api/start-game', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ gameId })
-		});
-
-		if (!res.ok) return;
-
-		preloadedSession = await res.json();
-	} catch {
-		// Silent failure
-	} finally {
-		preloading = false;
-	}
-}
-
 function applySession(data: SessionData) {
 	sessionId = data.sessionId;
 	token = data.token;
@@ -103,30 +81,25 @@ function applySession(data: SessionData) {
 	tickTimer();
 }
 
-function waitForPreload(): Promise<void> {
-	return new Promise((resolve) => {
-		const interval = setInterval(() => {
-			if (!preloading) {
-				clearInterval(interval);
-				resolve();
-			}
-		}, 50);
-	});
-}
-
 async function fetchAndStartGame(gameId: number) {
-	const res = await fetch('/api/start-game', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ gameId })
-	});
+	preloading = true;
 
-	if (!res.ok) {
-		const err = await res.json();
-		throw new Error(err.message ?? 'Failed to start game');
+	try {
+		const res = await fetch('/api/start-game', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ gameId })
+		});
+
+		if (!res.ok) {
+			const err = await res.json();
+			throw new Error(err.message ?? 'Failed to start game');
+		}
+
+		applySession(await res.json());
+	} finally {
+		preloading = false;
 	}
-
-	applySession(await res.json());
 }
 
 async function verifyHitOnServer(
@@ -134,11 +107,13 @@ async function verifyHitOnServer(
 	clickX: number,
 	clickY: number
 ) {
+	if (!token) return;
+
 	try {
 		await fetch('/api/verify-hit', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ sessionId, targetId, clickX, clickY })
+			body: JSON.stringify({ token, targetId, clickX, clickY })
 		});
 	} catch (err) {
 		console.error('Server verification failed: ', err);
@@ -178,36 +153,13 @@ export function isPreloading() {
 	return preloading;
 }
 
-// Preload game session
-export async function preloadSession(gameId: number) {
-	if (preloadedSession || phase === 'playing') return;
-
-	await fetchAndPreload(gameId);
+// Session creation must happen only when the player actually starts.
+export function preloadSession(_gameId: number) {
+	// Intentionally disabled: creating a session before the player clicks Start
+	// starts the authoritative server timer early and flags honest submissions.
 }
 
 export function startGame(gameId: number): Promise<void> | void {
-	if (preloadedSession) {
-		const session = preloadedSession;
-		preloadedSession = null;
-		applySession(session); // synchronous - no wait
-
-		fetchAndPreload(gameId);
-		return;
-	}
-
-	if (preloading) {
-		// Preloading is in flight - wait for it then apply
-		return waitForPreload().then(() => {
-			if (preloadedSession) {
-				const session = preloadedSession;
-				preloadedSession = null;
-				applySession(session);
-				fetchAndPreload(gameId);
-			}
-		});
-	}
-
-	// Fallback: preload didn't finish in time, fetch now, return a promise
 	return fetchAndStartGame(gameId);
 }
 

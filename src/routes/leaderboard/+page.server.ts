@@ -23,6 +23,8 @@ export const load: PageServerLoad = async ({ url }) => {
 				id: true,
 				playerName: true,
 				timeMs: true,
+				trustStatus: true,
+				trustReason: true,
 				createdAt: true
 			}
 		}),
@@ -46,7 +48,14 @@ export const load: PageServerLoad = async ({ url }) => {
 	const playerScore = playerScoreNotOnCurrentPage
 		? await prisma.score.findFirst({
 				where: { timeMs: highlightTime },
-				select: { id: true, playerName: true, timeMs: true, createdAt: true }
+				select: {
+					id: true,
+					playerName: true,
+					timeMs: true,
+					trustStatus: true,
+					trustReason: true,
+					createdAt: true
+				}
 			})
 		: null;
 

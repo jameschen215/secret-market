@@ -72,17 +72,32 @@
 				<tbody>
 					{#each data.scores as score, i (score.id)}
 						{@const rank = (data.page - 1) * 10 + i + 1}
+						{@const isUntrusted = score.trustStatus === 'UNTRUSTED'}
 						{@const highlight =
 							data.highlightTime !== null &&
 							score.timeMs === data.highlightTime}
 
-						<tr class="row" class:highlight class:top3={rank <= 3}>
+						<tr
+							class="row"
+							class:highlight
+							class:untrusted={isUntrusted}
+							class:top3={rank <= 3 && !isUntrusted}
+						>
 							<td class="col-rank">
 								<span class="rank-num">{rank}</span>
-								<span class="rank-emoji">{getRankEmoji(rank)}</span>
+								{#if isUntrusted}
+									<span class="rank-emoji">!</span>
+								{:else}
+									<span class="rank-emoji">{getRankEmoji(rank)}</span>
+								{/if}
 							</td>
 							<td class="col-name">
-								{score.playerName}
+								<span class="player-name">{score.playerName}</span>
+								{#if isUntrusted}
+									<span class="trust-badge" title={score.trustReason ?? ''}>
+										Untrusted
+									</span>
+								{/if}
 							</td>
 
 							<td class="col-time">{formatTime(score.timeMs)}</td>
@@ -94,17 +109,26 @@
 
 			<!-- Player score outside top 10 -->
 			{#if data.playerScore && data.highlightRank}
+				{@const isUntrusted = data.playerScore.trustStatus === 'UNTRUSTED'}
 				<div class="outside-top">
 					<span class="outside-divider">· · ·</span>
 
 					<table class="leaderboard">
 						<tbody>
-							<tr class="row highlight">
+							<tr class="row highlight" class:untrusted={isUntrusted}>
 								<td class="col-rank">
 									<span class="rank-num">{data.highlightRank}</span>
 								</td>
 								<td class="col-name">
-									{data.playerScore.playerName}
+									<span class="player-name">{data.playerScore.playerName}</span>
+									{#if isUntrusted}
+										<span
+											class="trust-badge"
+											title={data.playerScore.trustReason ?? ''}
+										>
+											Untrusted
+										</span>
+									{/if}
 								</td>
 								<td class="col-time">
 									{formatTime(data.playerScore.timeMs)}
@@ -308,6 +332,21 @@
 		color: var(--color-gold);
 	}
 
+	.row.untrusted {
+		background: rgba(239 95 95 / 0.06);
+	}
+
+	.row.untrusted td {
+		color: var(--color-text-muted);
+	}
+
+	.row.untrusted .col-time {
+		color: var(--color-accent-red);
+		text-decoration: line-through;
+		text-decoration-thickness: 1px;
+		text-decoration-color: rgba(239 95 95 / 0.8);
+	}
+
 	.col-rank {
 		width: 80px;
 	}
@@ -328,6 +367,26 @@
 
 	.col-name {
 		font-weight: 600;
+	}
+
+	.player-name {
+		display: inline-block;
+		margin-right: 0.45rem;
+	}
+
+	.trust-badge {
+		display: inline-flex;
+		align-items: center;
+		vertical-align: middle;
+		padding: 0.15rem 0.4rem;
+		border: 1px solid rgba(239 95 95 / 0.35);
+		border-radius: var(--radius-sm);
+		color: var(--color-accent-red);
+		background: rgba(239 95 95 / 0.1);
+		font-size: 0.65rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.08rem;
 	}
 
 	.col-time {
