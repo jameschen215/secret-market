@@ -128,6 +128,9 @@ export const ScoreScalarFieldEnum = {
   sessionId: 'sessionId',
   playerName: 'playerName',
   timeMs: 'timeMs',
+  trustStatus: 'trustStatus',
+  trustReason: 'trustReason',
+  reviewedAt: 'reviewedAt',
   createdAt: 'createdAt'
 } as const
 

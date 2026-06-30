@@ -17,6 +17,10 @@
 	let isFlagged = $derived(errorCode === 'FLAGGED');
 	let isRetryable = $derived(errorCode === 'SERVER_ERROR');
 	let isSuccess = $derived(formResult?.success === true);
+	let shouldShowOfficialDuration = $derived(
+		formResult?.showOfficialDuration === true &&
+			formResult.displayDuration !== formResult.officialDuration
+	);
 
 	let inputEl = $state<HTMLInputElement | undefined>(undefined);
 
@@ -70,7 +74,7 @@
 				<span class="time-value">{formatTime(formResult.displayDuration!)}</span
 				>
 			</div>
-			{#if formResult.showOfficialDuration}
+			{#if shouldShowOfficialDuration}
 				<div class="time-display official">
 					<span class="time-label">Official Time</span>
 					<span class="time-value">

@@ -41,6 +41,9 @@ export type ScoreMinAggregateOutputType = {
   sessionId: string | null
   playerName: string | null
   timeMs: number | null
+  trustStatus: $Enums.ScoreTrustStatus | null
+  trustReason: string | null
+  reviewedAt: Date | null
   createdAt: Date | null
 }
 
@@ -49,6 +52,9 @@ export type ScoreMaxAggregateOutputType = {
   sessionId: string | null
   playerName: string | null
   timeMs: number | null
+  trustStatus: $Enums.ScoreTrustStatus | null
+  trustReason: string | null
+  reviewedAt: Date | null
   createdAt: Date | null
 }
 
@@ -57,6 +63,9 @@ export type ScoreCountAggregateOutputType = {
   sessionId: number
   playerName: number
   timeMs: number
+  trustStatus: number
+  trustReason: number
+  reviewedAt: number
   createdAt: number
   _all: number
 }
@@ -77,6 +86,9 @@ export type ScoreMinAggregateInputType = {
   sessionId?: true
   playerName?: true
   timeMs?: true
+  trustStatus?: true
+  trustReason?: true
+  reviewedAt?: true
   createdAt?: true
 }
 
@@ -85,6 +97,9 @@ export type ScoreMaxAggregateInputType = {
   sessionId?: true
   playerName?: true
   timeMs?: true
+  trustStatus?: true
+  trustReason?: true
+  reviewedAt?: true
   createdAt?: true
 }
 
@@ -93,6 +108,9 @@ export type ScoreCountAggregateInputType = {
   sessionId?: true
   playerName?: true
   timeMs?: true
+  trustStatus?: true
+  trustReason?: true
+  reviewedAt?: true
   createdAt?: true
   _all?: true
 }
@@ -188,6 +206,9 @@ export type ScoreGroupByOutputType = {
   sessionId: string
   playerName: string
   timeMs: number
+  trustStatus: $Enums.ScoreTrustStatus
+  trustReason: string | null
+  reviewedAt: Date | null
   createdAt: Date
   _count: ScoreCountAggregateOutputType | null
   _avg: ScoreAvgAggregateOutputType | null
@@ -219,6 +240,9 @@ export type ScoreWhereInput = {
   sessionId?: Prisma.StringFilter<"Score"> | string
   playerName?: Prisma.StringFilter<"Score"> | string
   timeMs?: Prisma.IntFilter<"Score"> | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFilter<"Score"> | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.StringNullableFilter<"Score"> | string | null
+  reviewedAt?: Prisma.DateTimeNullableFilter<"Score"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Score"> | Date | string
   session?: Prisma.XOR<Prisma.GameSessionScalarRelationFilter, Prisma.GameSessionWhereInput>
 }
@@ -228,6 +252,9 @@ export type ScoreOrderByWithRelationInput = {
   sessionId?: Prisma.SortOrder
   playerName?: Prisma.SortOrder
   timeMs?: Prisma.SortOrder
+  trustStatus?: Prisma.SortOrder
+  trustReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   session?: Prisma.GameSessionOrderByWithRelationInput
 }
@@ -240,6 +267,9 @@ export type ScoreWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ScoreWhereInput | Prisma.ScoreWhereInput[]
   playerName?: Prisma.StringFilter<"Score"> | string
   timeMs?: Prisma.IntFilter<"Score"> | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFilter<"Score"> | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.StringNullableFilter<"Score"> | string | null
+  reviewedAt?: Prisma.DateTimeNullableFilter<"Score"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Score"> | Date | string
   session?: Prisma.XOR<Prisma.GameSessionScalarRelationFilter, Prisma.GameSessionWhereInput>
 }, "id" | "sessionId">
@@ -249,6 +279,9 @@ export type ScoreOrderByWithAggregationInput = {
   sessionId?: Prisma.SortOrder
   playerName?: Prisma.SortOrder
   timeMs?: Prisma.SortOrder
+  trustStatus?: Prisma.SortOrder
+  trustReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  reviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ScoreCountOrderByAggregateInput
   _avg?: Prisma.ScoreAvgOrderByAggregateInput
@@ -265,12 +298,18 @@ export type ScoreScalarWhereWithAggregatesInput = {
   sessionId?: Prisma.StringWithAggregatesFilter<"Score"> | string
   playerName?: Prisma.StringWithAggregatesFilter<"Score"> | string
   timeMs?: Prisma.IntWithAggregatesFilter<"Score"> | number
+  trustStatus?: Prisma.EnumScoreTrustStatusWithAggregatesFilter<"Score"> | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.StringNullableWithAggregatesFilter<"Score"> | string | null
+  reviewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Score"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Score"> | Date | string
 }
 
 export type ScoreCreateInput = {
   playerName: string
   timeMs: number
+  trustStatus?: $Enums.ScoreTrustStatus
+  trustReason?: string | null
+  reviewedAt?: Date | string | null
   createdAt?: Date | string
   session: Prisma.GameSessionCreateNestedOneWithoutScoreInput
 }
@@ -280,12 +319,18 @@ export type ScoreUncheckedCreateInput = {
   sessionId: string
   playerName: string
   timeMs: number
+  trustStatus?: $Enums.ScoreTrustStatus
+  trustReason?: string | null
+  reviewedAt?: Date | string | null
   createdAt?: Date | string
 }
 
 export type ScoreUpdateInput = {
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.GameSessionUpdateOneRequiredWithoutScoreNestedInput
 }
@@ -295,6 +340,9 @@ export type ScoreUncheckedUpdateInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -303,12 +351,18 @@ export type ScoreCreateManyInput = {
   sessionId: string
   playerName: string
   timeMs: number
+  trustStatus?: $Enums.ScoreTrustStatus
+  trustReason?: string | null
+  reviewedAt?: Date | string | null
   createdAt?: Date | string
 }
 
 export type ScoreUpdateManyMutationInput = {
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -317,6 +371,9 @@ export type ScoreUncheckedUpdateManyInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -330,6 +387,9 @@ export type ScoreCountOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
   playerName?: Prisma.SortOrder
   timeMs?: Prisma.SortOrder
+  trustStatus?: Prisma.SortOrder
+  trustReason?: Prisma.SortOrder
+  reviewedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -343,6 +403,9 @@ export type ScoreMaxOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
   playerName?: Prisma.SortOrder
   timeMs?: Prisma.SortOrder
+  trustStatus?: Prisma.SortOrder
+  trustReason?: Prisma.SortOrder
+  reviewedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -351,6 +414,9 @@ export type ScoreMinOrderByAggregateInput = {
   sessionId?: Prisma.SortOrder
   playerName?: Prisma.SortOrder
   timeMs?: Prisma.SortOrder
+  trustStatus?: Prisma.SortOrder
+  trustReason?: Prisma.SortOrder
+  reviewedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -391,9 +457,20 @@ export type ScoreUncheckedUpdateOneWithoutSessionNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ScoreUpdateToOneWithWhereWithoutSessionInput, Prisma.ScoreUpdateWithoutSessionInput>, Prisma.ScoreUncheckedUpdateWithoutSessionInput>
 }
 
+export type EnumScoreTrustStatusFieldUpdateOperationsInput = {
+  set?: $Enums.ScoreTrustStatus
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type ScoreCreateWithoutSessionInput = {
   playerName: string
   timeMs: number
+  trustStatus?: $Enums.ScoreTrustStatus
+  trustReason?: string | null
+  reviewedAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -401,6 +478,9 @@ export type ScoreUncheckedCreateWithoutSessionInput = {
   id?: number
   playerName: string
   timeMs: number
+  trustStatus?: $Enums.ScoreTrustStatus
+  trustReason?: string | null
+  reviewedAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -423,6 +503,9 @@ export type ScoreUpdateToOneWithWhereWithoutSessionInput = {
 export type ScoreUpdateWithoutSessionInput = {
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -430,6 +513,9 @@ export type ScoreUncheckedUpdateWithoutSessionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   playerName?: Prisma.StringFieldUpdateOperationsInput | string
   timeMs?: Prisma.IntFieldUpdateOperationsInput | number
+  trustStatus?: Prisma.EnumScoreTrustStatusFieldUpdateOperationsInput | $Enums.ScoreTrustStatus
+  trustReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -440,6 +526,9 @@ export type ScoreSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessionId?: boolean
   playerName?: boolean
   timeMs?: boolean
+  trustStatus?: boolean
+  trustReason?: boolean
+  reviewedAt?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.GameSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["score"]>
@@ -449,6 +538,9 @@ export type ScoreSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   sessionId?: boolean
   playerName?: boolean
   timeMs?: boolean
+  trustStatus?: boolean
+  trustReason?: boolean
+  reviewedAt?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.GameSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["score"]>
@@ -458,6 +550,9 @@ export type ScoreSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   sessionId?: boolean
   playerName?: boolean
   timeMs?: boolean
+  trustStatus?: boolean
+  trustReason?: boolean
+  reviewedAt?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.GameSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["score"]>
@@ -467,10 +562,13 @@ export type ScoreSelectScalar = {
   sessionId?: boolean
   playerName?: boolean
   timeMs?: boolean
+  trustStatus?: boolean
+  trustReason?: boolean
+  reviewedAt?: boolean
   createdAt?: boolean
 }
 
-export type ScoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "playerName" | "timeMs" | "createdAt", ExtArgs["result"]["score"]>
+export type ScoreOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "playerName" | "timeMs" | "trustStatus" | "trustReason" | "reviewedAt" | "createdAt", ExtArgs["result"]["score"]>
 export type ScoreInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.GameSessionDefaultArgs<ExtArgs>
 }
@@ -491,6 +589,9 @@ export type $ScorePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     sessionId: string
     playerName: string
     timeMs: number
+    trustStatus: $Enums.ScoreTrustStatus
+    trustReason: string | null
+    reviewedAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["score"]>
   composites: {}
@@ -920,6 +1021,9 @@ export interface ScoreFieldRefs {
   readonly sessionId: Prisma.FieldRef<"Score", 'String'>
   readonly playerName: Prisma.FieldRef<"Score", 'String'>
   readonly timeMs: Prisma.FieldRef<"Score", 'Int'>
+  readonly trustStatus: Prisma.FieldRef<"Score", 'ScoreTrustStatus'>
+  readonly trustReason: Prisma.FieldRef<"Score", 'String'>
+  readonly reviewedAt: Prisma.FieldRef<"Score", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Score", 'DateTime'>
 }
     

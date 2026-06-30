@@ -17,3 +17,11 @@ export const SessionStatus = {
 } as const
 
 export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus]
+
+
+export const ScoreTrustStatus = {
+  TRUSTED: 'TRUSTED',
+  UNTRUSTED: 'UNTRUSTED'
+} as const
+
+export type ScoreTrustStatus = (typeof ScoreTrustStatus)[keyof typeof ScoreTrustStatus]

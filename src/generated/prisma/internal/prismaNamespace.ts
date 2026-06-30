@@ -871,6 +871,9 @@ export const ScoreScalarFieldEnum = {
   sessionId: 'sessionId',
   playerName: 'playerName',
   timeMs: 'timeMs',
+  trustStatus: 'trustStatus',
+  trustReason: 'trustReason',
+  reviewedAt: 'reviewedAt',
   createdAt: 'createdAt'
 } as const
 
@@ -1011,6 +1014,20 @@ export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'ScoreTrustStatus'
+ */
+export type EnumScoreTrustStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScoreTrustStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ScoreTrustStatus[]'
+ */
+export type ListEnumScoreTrustStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScoreTrustStatus[]'>
     
 
 /**
