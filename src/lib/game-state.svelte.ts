@@ -40,6 +40,11 @@ let feedback = $state<ClickFeedback | null>(null);
 
 let preloading = $state(false);
 
+// Verify-hit requests are fired without blocking the UI (see verifyHitOnServer),
+// but score submission must not race ahead of the final target's verification
+// landing server-side. Track in-flight requests so submission can wait on them.
+const pendingVerifications = new Set<Promise<void>>();
+
 // Timer State
 let timerStart = $state(0);
 let timerElapsed = $state(0);
@@ -102,22 +107,27 @@ async function fetchAndStartGame(gameId: number) {
 	}
 }
 
-async function verifyHitOnServer(
+function verifyHitOnServer(
 	targetId: number,
 	clickX: number,
 	clickY: number
-) {
-	if (!token) return;
+): Promise<void> {
+	if (!token) return Promise.resolve();
 
-	try {
-		await fetch('/api/verify-hit', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ token, targetId, clickX, clickY })
+	const request = fetch('/api/verify-hit', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ token, targetId, clickX, clickY })
+	})
+		.then(() => {})
+		.catch((err) => {
+			console.error('Server verification failed: ', err);
 		});
-	} catch (err) {
-		console.error('Server verification failed: ', err);
-	}
+
+	pendingVerifications.add(request);
+	request.finally(() => pendingVerifications.delete(request));
+
+	return request;
 }
 
 // PUBLIC API
@@ -151,6 +161,13 @@ export function isTargetFound(targetId: number) {
 
 export function isPreloading() {
 	return preloading;
+}
+
+// Score submission must wait for every fire-and-forget verify-hit request
+// (in particular the one for the final target) to reach the server first,
+// otherwise a fast submission can be rejected as under-verified.
+export async function awaitPendingVerifications() {
+	await Promise.allSettled(pendingVerifications);
 }
 
 // Session creation must happen only when the player actually starts.

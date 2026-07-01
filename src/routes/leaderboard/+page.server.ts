@@ -12,6 +12,7 @@ function getIntParam(url: URL, key: string): number | null {
 export const load: PageServerLoad = async ({ url }) => {
 	const highlightRank = getIntParam(url, 'rank');
 	const highlightTime = getIntParam(url, 'time');
+	const highlightId = getIntParam(url, 'id');
 	const page = Math.max(1, getIntParam(url, 'page') ?? 1);
 
 	const [scores, totalCount, game] = await Promise.all([
@@ -38,25 +39,18 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-	// If the player's rank is outside the top 10, fetch their scores separately
+	// If the player's score isn't in this page's results, fetch it separately
+	// by its exact id — matching by timeMs/rank alone is ambiguous whenever
+	// two scores tie.
 	const playerScoreOnCurrentPage =
-		highlightRank !== null &&
-		highlightRank >= (page - 1) * PAGE_SIZE + 1 &&
-		highlightRank <= page * PAGE_SIZE;
+		highlightId !== null && scores.some((score) => score.id === highlightId);
 
 	const playerScoreNotOnCurrentPage =
-		highlightRank !== null &&
-		highlightTime !== null &&
-		!playerScoreOnCurrentPage;
+		highlightId !== null && !playerScoreOnCurrentPage;
 
 	const playerScore = playerScoreNotOnCurrentPage
-		? await prisma.score.findFirst({
-				where: { timeMs: highlightTime },
-				orderBy: [
-					{ trustStatus: 'asc' },
-					{ timeMs: 'asc' },
-					{ createdAt: 'asc' }
-				],
+		? await prisma.score.findUnique({
+				where: { id: highlightId },
 				select: {
 					id: true,
 					playerName: true,
@@ -73,6 +67,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		playerScore,
 		highlightRank,
 		highlightTime,
+		highlightId,
 		page,
 		totalPages,
 		totalCount,

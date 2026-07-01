@@ -6,15 +6,37 @@ import { checkHit } from '$lib/hit-detection';
 import { verifyHitSchema } from '$lib/schema';
 import { hashToken, verifyToken } from '$lib/server/crypto';
 import type { BoundingBox, PolygonPoint } from '$lib/types';
+import { Prisma } from '../../../generated/prisma/client';
 
 const RATE_LIMIT_WINDOW_MS = 10_000;
 const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 12;
+// How often to sweep stale sessions out of verifyAttempts. Piggybacks on
+// real request traffic rather than a background timer, so entries for
+// sessions that stop sending requests don't accumulate forever.
+const SWEEP_INTERVAL_MS = 60_000;
 
 const verifyAttempts = new Map<string, number[]>();
+let lastSweep = Date.now();
+
+function sweepStaleEntries(now: number) {
+	if (now - lastSweep < SWEEP_INTERVAL_MS) return;
+
+	lastSweep = now;
+	const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+	for (const [sessionId, timestamps] of verifyAttempts) {
+		if (timestamps.every((timestamp) => timestamp <= windowStart)) {
+			verifyAttempts.delete(sessionId);
+		}
+	}
+}
 
 function assertWithinRateLimit(sessionId: string) {
 	const now = Date.now();
 	const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+	sweepStaleEntries(now);
+
 	const attempts = (verifyAttempts.get(sessionId) ?? []).filter(
 		(timestamp) => timestamp > windowStart
 	);
@@ -86,16 +108,29 @@ export const POST: RequestHandler = async ({ request }) => {
 	const boundingBox = target.boundingBox as unknown as BoundingBox;
 	const isHit = checkHit(clickX, clickY, polygon, boundingBox);
 
-	// Record the hit attempt regardless of result
-	await prisma.hit.create({
-		data: {
-			sessionId: session.id,
-			targetId,
-			clickX,
-			clickY,
-			verified: isHit
+	// Record the hit attempt regardless of result. A concurrent request for
+	// the same target can slip past the existingHit check above and race us
+	// here — the unique constraint on (sessionId, targetId) is the real guard.
+	try {
+		await prisma.hit.create({
+			data: {
+				sessionId: session.id,
+				targetId,
+				clickX,
+				clickY,
+				verified: isHit
+			}
+		});
+	} catch (err) {
+		if (
+			err instanceof Prisma.PrismaClientKnownRequestError &&
+			err.code === 'P2002'
+		) {
+			throw error(400, 'Target already found in this session');
 		}
-	});
+
+		throw err;
+	}
 
 	if (!isHit) {
 		return json({

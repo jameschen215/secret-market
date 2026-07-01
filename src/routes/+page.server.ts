@@ -4,6 +4,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/prisma';
 import { submitScoreSchema } from '$lib/schema';
 import { hashToken, verifyToken } from '$lib/server/crypto';
+import { Prisma, type Score } from '../generated/prisma/client';
 
 // Anti-cheat / UX thresholds for reconciling client and server timing.
 // These are independent concerns and intentionally kept separate:
@@ -162,26 +163,53 @@ export const actions = {
 		const showVerificationNotice = drift >= NOTICE_THRESHOLD_MS;
 
 		// Write Score — always the server-computed duration, regardless of
-		// what is shown to the player in this response.
-		const [score] = await prisma.$transaction([
-			prisma.score.create({
-				data: { sessionId: session.id, playerName, timeMs: serverDuration }
-			}),
-			prisma.gameSession.update({
-				where: { id: session.id },
-				data: { status: 'COMPLETED' }
-			})
-		]);
+		// what is shown to the player in this response. A concurrent duplicate
+		// submission for this session can slip past the session.score check
+		// above and race us here — the unique constraint on Score.sessionId is
+		// the real guard.
+		let score: Score;
 
+		try {
+			[score] = await prisma.$transaction([
+				prisma.score.create({
+					data: { sessionId: session.id, playerName, timeMs: serverDuration }
+				}),
+				prisma.gameSession.update({
+					where: { id: session.id },
+					data: { status: 'COMPLETED' }
+				})
+			]);
+		} catch (err) {
+			if (
+				err instanceof Prisma.PrismaClientKnownRequestError &&
+				err.code === 'P2002'
+			) {
+				return fail(400, {
+					error: 'Score already submitted',
+					errorCode: 'FLAGGED',
+					playerName
+				});
+			}
+
+			throw err;
+		}
+
+		// Count trusted scores that sort strictly before this one under the same
+		// ordering the leaderboard uses (timeMs asc, createdAt asc as tiebreak),
+		// so ties don't collapse onto the same rank number.
 		const rank = await prisma.score.count({
 			where: {
-				timeMs: { lt: score.timeMs },
-				trustStatus: 'TRUSTED'
+				trustStatus: 'TRUSTED',
+				OR: [
+					{ timeMs: { lt: score.timeMs } },
+					{ timeMs: score.timeMs, createdAt: { lt: score.createdAt } }
+				]
 			}
 		});
 
 		return {
 			success: true,
+			scoreId: score.id,
 			officialDuration: serverDuration,
 			displayDuration,
 			showOfficialDuration,

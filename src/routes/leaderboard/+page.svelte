@@ -25,6 +25,10 @@
 			params.set('time', String(data.highlightTime));
 		}
 
+		if (data.highlightId) {
+			params.set('id', String(data.highlightId));
+		}
+
 		return params.toString();
 	}
 </script>
@@ -75,8 +79,7 @@
 						{@const rank = (data.page - 1) * 10 + i + 1}
 						{@const isUntrusted = score.trustStatus === 'UNTRUSTED'}
 						{@const highlight =
-							data.highlightTime !== null &&
-							score.timeMs === data.highlightTime}
+							data.highlightId !== null && score.id === data.highlightId}
 
 						<tr
 							class="row"

@@ -4,7 +4,12 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 
 	import { formatTime } from '$lib/utils/formatter';
-	import { getElapsed, getToken, resetGame } from '$lib/game-state.svelte';
+	import {
+		awaitPendingVerifications,
+		getElapsed,
+		getToken,
+		resetGame
+	} from '$lib/game-state.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
@@ -28,8 +33,13 @@
 		inputEl?.focus();
 	});
 
-	const onSubmit: SubmitFunction = () => {
+	const onSubmit: SubmitFunction = async () => {
 		submitting = true;
+
+		// Wait for any in-flight verify-hit requests (esp. the final target's)
+		// to reach the server before submitting, so the score isn't rejected
+		// as under-verified due to a client/server race.
+		await awaitPendingVerifications();
 
 		return async ({ update }) => {
 			submitting = false;
@@ -43,7 +53,7 @@
 
 		goto(
 			resolve(
-				`/leaderboard?rank=${formResult.rank}&time=${formResult.officialDuration}`
+				`/leaderboard?rank=${formResult.rank}&time=${formResult.officialDuration}&id=${formResult.scoreId}`
 			)
 		);
 	}
