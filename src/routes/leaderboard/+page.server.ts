@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const highlightId = getIntParam(url, 'id');
 	const page = Math.max(1, getIntParam(url, 'page') ?? 1);
 
-	const [scores, totalCount, game] = await Promise.all([
+	const [scores, totalCount] = await Promise.all([
 		prisma.score.findMany({
 			orderBy: [
 				{ trustStatus: 'asc' },
@@ -33,8 +33,7 @@ export const load: PageServerLoad = async ({ url }) => {
 				createdAt: true
 			}
 		}),
-		prisma.score.count(),
-		prisma.game.findFirst({ select: { id: true } })
+		prisma.score.count()
 	]);
 
 	const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -70,7 +69,6 @@ export const load: PageServerLoad = async ({ url }) => {
 		highlightId,
 		page,
 		totalPages,
-		totalCount,
-		gameId: game?.id ?? null
+		totalCount
 	};
 };

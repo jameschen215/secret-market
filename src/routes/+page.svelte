@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import {
-		getPhase,
-		preloadSession,
-		resetGame,
-		startGame
-	} from '$lib/game-state.svelte.js';
+	import { getPhase, resetGame, startGame } from '$lib/game-state.svelte.js';
 	import Timer from './_components/Timer.svelte';
 	import GameBoard from './_components/GameBoard.svelte';
 	import ScoreModal from './_components/ScoreModal.svelte';
@@ -21,10 +16,6 @@
 
 	$effect(() => {
 		resetGame();
-	});
-
-	$effect.root(() => {
-		preloadSession(data.game.id);
 	});
 
 	async function onStart() {

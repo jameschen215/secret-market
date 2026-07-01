@@ -170,12 +170,6 @@ export async function awaitPendingVerifications() {
 	await Promise.allSettled(pendingVerifications);
 }
 
-// Session creation must happen only when the player actually starts.
-export function preloadSession(_gameId: number) {
-	// Intentionally disabled: creating a session before the player clicks Start
-	// starts the authoritative server timer early and flags honest submissions.
-}
-
 export function startGame(gameId: number): Promise<void> | void {
 	return fetchAndStartGame(gameId);
 }

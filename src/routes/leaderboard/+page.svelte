@@ -1,16 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { preloadSession } from '$lib/game-state.svelte';
 	import { formatDate, formatTime, getRankEmoji } from '$lib/utils/formatter';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
 	let { data } = $props();
-
-	$effect.root(() => {
-		if (data.gameId) {
-			preloadSession(data.gameId);
-		}
-	});
 
 	// Builds query string for pagination links preserving rank/time highligh params
 	function pageParams(page: number): string {
