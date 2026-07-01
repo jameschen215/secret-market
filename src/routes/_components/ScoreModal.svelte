@@ -7,13 +7,13 @@
 	import {
 		awaitPendingVerifications,
 		getElapsed,
-		getToken,
-		resetGame
+		getToken
 	} from '$lib/game-state.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	let { formResult }: { formResult: ActionData } = $props();
+	let { formResult, onClose }: { formResult: ActionData; onClose: () => void } =
+		$props();
 
 	let submitting = $state(false);
 
@@ -166,7 +166,7 @@
 					modified or expired.
 				</p>
 
-				<button type="button" class="close-btn" onclick={resetGame}>
+				<button type="button" class="close-btn" onclick={onClose}>
 					Close
 				</button>
 			{:else if isRetryable}
@@ -182,7 +182,7 @@
 						{submitting ? 'Retrying...' : 'Try Again'}
 					</button>
 
-					<button type="button" class="close-btn secondary" onclick={resetGame}>
+					<button type="button" class="close-btn secondary" onclick={onClose}>
 						Close
 					</button>
 				</div>

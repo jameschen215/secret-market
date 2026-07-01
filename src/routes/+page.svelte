@@ -156,7 +156,7 @@
 	<!-- Score Modal -->
 
 	{#if getPhase() === 'completed'}
-		<ScoreModal {formResult} />
+		<ScoreModal {formResult} onClose={onStop} />
 	{/if}
 </div>
 
